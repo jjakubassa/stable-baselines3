@@ -290,6 +290,16 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
             self.logger.record("rollout/ep_rew_mean", safe_mean([ep_info["r"] for ep_info in self.ep_info_buffer]))
             self.logger.record("rollout/ep_len_mean", safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
+
+            standard_keys = {'r', 'l', 't'}
+            extra_keys = set(self.ep_info_buffer[0].keys()) - standard_keys
+
+            for key in extra_keys:
+                values = [ep_info[key] for ep_info in self.ep_info_buffer]
+                # Convert numpy arrays to floats if necessary
+                values = [v.item() if hasattr(v, 'item') else v for v in values]
+                self.logger.record(f"info/{key}", safe_mean(values))
+
         self.logger.record("time/fps", fps)
         self.logger.record("time/time_elapsed", int(time_elapsed), exclude="tensorboard")
         self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
